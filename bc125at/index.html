@@ -15,16 +15,20 @@
 
 <h1>Programming a Uniden BC125AT from your browser</h1>
 <h2 style="color: red">USE AT YOUR OWN RISK.</h2>
+<p>This communicates with a Uniden BC125AT scanner using <a
+    href="https://developer.mozilla.org/en-US/docs/Web/API/USB">WebUSB</a> and
+    requires no special drivers. It might be useful for BC125AT users who do not
+    use Windows or might want to program their scanner using an Android
+    device.</p>
 <p>You probably need to reload the page after sending commands. I haven’t worked
     out why yet, but it’s definitely something I’m doing wrong.</p>
 <p>Your current browser
     <span id="supported">may or may not be</span> supported. (As of April 2023,
     this is only supported by a
     <a href="https://developer.mozilla.org/en-US/docs/Web/API/USB#browser_compatibility">limited
-    number of browsers</a> such as Chrome and Edge.)</p>
-<p>This communicates with a Uniden BC125AT scanner using <a
-    href="https://developer.mozilla.org/en-US/docs/Web/API/USB">WebUSB</a>.
-    It might be useful for BC125AT users who do not use Windows.</p>
+    number of browsers</a> such as Chrome and Edge.) I myself have tested it
+    using Chrome 113.0.5672.92 on a MacBook Pro 16" (2023) running Ventura 13.3
+    and Chrome 113.0.5672.77 on a Pixel 6 Pro running Android 13.</p>
 
 <h3>Importing BC125AT SS and Chirp files</h3>
 <p>You can download frequency lists to import from places like
