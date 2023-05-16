@@ -18,6 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 "use strict";
+// TODO(townba): I'd rather not do it this way, but for now, this is how I can avoid
+// problems with connecting more than once.
+let scanner;
 class Channel {
     // Determined through experimentation. Note that BC125AT SS and the scanner's
     // own UI do not allow all these characters, but they work on the scanner.
@@ -182,6 +185,12 @@ class Channel {
     ;
 })(Channel || (Channel = {}));
 let inputEditor;
+function clearResponses() {
+    const outputTextArea = document.getElementById("output");
+    if (outputTextArea instanceof HTMLTextAreaElement) {
+        outputTextArea.value = "";
+    }
+}
 function getScannerEventCallback(output) {
     if (!(output instanceof HTMLTextAreaElement)) {
         return undefined;
@@ -204,21 +213,27 @@ function getScannerEventCallback(output) {
     };
 }
 async function sendCommands() {
+    let shouldConnect = false;
     const outputTextArea = document.getElementById("output");
-    let scanner;
     if (outputTextArea instanceof HTMLTextAreaElement) {
-        scanner = new UnidenBC125AT(getScannerEventCallback(outputTextArea));
+        if (!scanner) {
+            scanner = new UnidenBC125AT(getScannerEventCallback(outputTextArea));
+            shouldConnect = true;
+        }
     }
     if (!scanner) {
         return Promise.reject(new Error("unable to create UnidenBC125AT class"));
     }
     try {
         try {
-            try {
-                await scanner.connect();
-            }
-            catch (e) {
-                return;
+            if (shouldConnect) {
+                try {
+                    await scanner.connect();
+                }
+                catch (e) {
+                    scanner = undefined;
+                    return;
+                }
             }
             const commands = inputEditor.getValue().split("\n").filter((fullLine) => {
                 const line = fullLine;
@@ -235,7 +250,7 @@ async function sendCommands() {
         }
     }
     finally {
-        return await scanner.close();
+        // return await scanner.close();
     }
 }
 function makeError(lineNumber, message) {

@@ -83,8 +83,10 @@ class UnidenBC125AT {
             return Promise.resolve();
         }
         try {
-            await this.device.close();
-            return await this.device.forget();
+            return await this.device.close();
+            // TODO(townba): For some reason, when I call `forget`, I can't figure out
+            // how to reconnect to the device without refreshing the page.
+            // return await this.device.forget();
         }
         finally {
             this.device = undefined;
