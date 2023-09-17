@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patricia’s Temporary Speech Page</title>
+</head>
+<body>
+<p><em>Type text to speak, then press Enter.</em></p>
+<row style="display: flex">
+  <textarea id="text" type="text" autofocus
+   style="flex: 1; font-family: auto; font-size: 2em"></textarea>
+</row>
+<row style="display: flex">
+  <textarea id="log" type="text" readonly autofocus rows=10
+   style="flex: 1; font-family: auto"></textarea>
+</row>
+<script>
+text.addEventListener("keydown", (event) => {
+  if (event.isComposing || event.keyCode === 229) {
+    return;
+  }
+  if (event.key === "Enter") {
+    event.preventDefault();
+    const s = text.value;
+    text.selectionStart = 0;
+    text.selectionEnd = -1;
+    log.value += s + "\n";
+    const utterance = new SpeechSynthesisUtterance(s);
+    utterance.rate = 0.8;
+    speechSynthesis.speak(utterance);
+  }
+});
+</script>
+</body>
+</html>
