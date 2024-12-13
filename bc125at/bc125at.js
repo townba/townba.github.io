@@ -40,8 +40,7 @@ class UnidenBC125AT {
         }
         const device = await navigator.usb.requestDevice({
             filters: [{
-                    vendorId: UnidenBC125AT.BC125AT_VENDOR_ID,
-                    productId: UnidenBC125AT.BC125AT_PRODUCT_ID
+                    vendorId: UnidenBC125AT.BC125AT_VENDOR_ID
                 }]
         });
         this.device = device;
