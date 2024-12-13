@@ -39,30 +39,29 @@ class UnidenScanner {
         if (this.device) {
             return Promise.reject(new Error("already connected"));
         }
-        const devices = await navigator.usb.getDevices();
+        // const devices = await navigator.usb.getDevices();
         let device;
         // TODO: Allow unpairing and repairing.
         // TODO: I saw one case where it thought it was paired but it couldn't
         // communicate. In cases like that, we should reestablish the connection.
-        if (devices.length == 1 && devices[0]) {
-            device = devices[0];
-        }
-        else {
-            device = await navigator.usb.requestDevice({
-                // TODO: Consider not including the product IDs in the filters so we can
-                // get other devices, too.
-                filters: [
-                    {
-                        vendorId: UnidenScanner.VENDOR_ID,
-                        productId: UnidenScanner.BC125AT_PRODUCT_ID
-                    },
-                    {
-                        vendorId: UnidenScanner.VENDOR_ID,
-                        productId: UnidenScanner.BCD325P2_PRODUCT_ID
-                    }
-                ]
-            });
-        }
+        // if (devices.length == 1 && devices[0]) {
+        //   device = devices[0];
+        // } else {
+        device = await navigator.usb.requestDevice({
+            // TODO: Consider not including the product IDs in the filters so we can
+            // get other devices, too.
+            filters: [
+                {
+                    vendorId: UnidenScanner.VENDOR_ID,
+                    productId: UnidenScanner.BC125AT_PRODUCT_ID
+                },
+                {
+                    vendorId: UnidenScanner.VENDOR_ID,
+                    productId: UnidenScanner.BCD325P2_PRODUCT_ID
+                }
+            ]
+        });
+        // }
         if (!device) {
             return Promise.reject(new Error("nothing connected"));
         }
