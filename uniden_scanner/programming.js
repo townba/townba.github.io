@@ -222,12 +222,16 @@ function getScannerEventCallback(output) {
     };
 }
 async function sendCommands() {
+    if (scanner) {
+        scanner.log("sendCommands");
+    }
     let shouldConnect = false;
     const outputTextArea = document.getElementById("output");
     if (outputTextArea instanceof HTMLTextAreaElement) {
         if (!scanner) {
             scanner = new UnidenScanner(getScannerEventCallback(outputTextArea));
             shouldConnect = true;
+            scanner.log("should connect");
         }
     }
     if (!scanner) {
@@ -237,12 +241,14 @@ async function sendCommands() {
         if (shouldConnect) {
             try {
                 await scanner.connect();
+                scanner.log("after await scanner.connect()");
             }
             catch (e) {
                 scanner = undefined;
                 return;
             }
         }
+        scanner.log("we should have a scanner here");
         const commands = 
         // inputEditor.getValue()
         inputEditor.value

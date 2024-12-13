@@ -69,7 +69,7 @@ class UnidenScanner {
         console.log(device);
         this.device = device;
         await device.open();
-        this.eventCallback("log", "device is open");
+        this.log("device is open");
         // Check each configuration, interface, and alternate.
         for (const config of device.configurations) {
             for (const interf of config.interfaces) {
@@ -93,7 +93,7 @@ class UnidenScanner {
                         if (inEndpoint && outEndpoint) {
                             this.inEndpoint = inEndpoint;
                             this.outEndpoint = outEndpoint;
-                            this.eventCallback("log", "endpoints found");
+                            this.log("endpoints found");
                             return device.selectConfiguration(config.configurationValue)
                                 .then(() => device.claimInterface(interf.interfaceNumber));
                         }
@@ -101,7 +101,7 @@ class UnidenScanner {
                 }
             }
         }
-        this.eventCallback("log", "endpoints not found");
+        this.log("endpoints not found");
         throw new Error("endpoints not found");
     }
     async close() {
@@ -127,12 +127,17 @@ class UnidenScanner {
         if (prefix.charAt(0) == "$") {
             cmd.replace(/\*[0-9A-F]{2}$/, "");
         }
+        this.log("attempting to write: " + cmd);
         await this.write(cmd);
         this.eventCallback("sent", cmd);
         if (prefix.charAt(0) != "$") {
             // NMEA sentences don't get responses.
             return await this.read(prefix, timeout);
         }
+    }
+    log(s) {
+        console.log(s);
+        this.eventCallback("log", s);
     }
     latlongAsGPSString(latlongAsDecimal, isLongitude) {
         if (latlongAsDecimal == null) {
@@ -197,7 +202,7 @@ class UnidenScanner {
         const sentenceGPRMC = `GPRMC,${timeGPSString},A,${latitudeGPSString},` +
             `${longitudeGPSString},${speedGPSString},${headingGPSString}`;
         let cmd = "$" + sentenceGPRMC + UnidenScanner.calculateNMEA0183Checksum(sentenceGPRMC);
-        this.eventCallback("log", "trying to write: " + cmd);
+        this.log("trying to write: " + cmd);
         await this.write(cmd);
         this.eventCallback("sent", cmd);
         // Send `GGA` even when we don't have an altitude; otherwise, the
@@ -206,7 +211,7 @@ class UnidenScanner {
         // sentence. It ignores their values in the `GGA` sentence.
         const sentenceGPGGA = `GPGGA,,,,,,,,,${altitudeGPSString},M`;
         cmd = "$" + sentenceGPGGA + UnidenScanner.calculateNMEA0183Checksum(sentenceGPGGA);
-        this.eventCallback("log", "trying to write: " + cmd);
+        this.log("trying to write: " + cmd);
         await this.write(cmd);
         this.eventCallback("sent", cmd);
         return Promise.resolve();
