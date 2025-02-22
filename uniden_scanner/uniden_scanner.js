@@ -92,7 +92,7 @@ class UnidenScanner {
                         if (inEndpoint && outEndpoint) {
                             this.inEndpoint = inEndpoint;
                             this.outEndpoint = outEndpoint;
-                            this.log("endpoints found");
+                            this.log("endpoints found; calling selectConfiguration");
                             return device.selectConfiguration(config.configurationValue)
                                 .catch(err => {
                                 const msg = "selectConfiguration: " + err;
