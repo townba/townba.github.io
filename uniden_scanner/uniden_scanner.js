@@ -94,7 +94,17 @@ class UnidenScanner {
                             this.outEndpoint = outEndpoint;
                             this.log("endpoints found");
                             return device.selectConfiguration(config.configurationValue)
-                                .then(() => device.claimInterface(interf.interfaceNumber));
+                                .catch(err => {
+                                const msg = "selectConfiguration: " + err;
+                                this.log(msg);
+                                throw new Error(msg);
+                            })
+                                .then(() => device.claimInterface(interf.interfaceNumber))
+                                .catch(err => {
+                                const msg = "claimInterface: " + err;
+                                this.log(msg);
+                                throw new Error(msg);
+                            });
                         }
                     }
                 }
