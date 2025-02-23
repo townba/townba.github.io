@@ -124,7 +124,6 @@ class UnidenScanner {
             const line = this.readBuffer.slice(0, cr);
             this.readBuffer = this.readBuffer.slice(cr + 1);
             if (line.split(",")[0] === cmd) {
-                this.eventCallback("response", line);
                 return;
             }
         }

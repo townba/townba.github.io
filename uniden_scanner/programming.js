@@ -260,7 +260,7 @@ function addNMEA0183Checksum(sentence) {
         return v.charCodeAt(0);
     }).reduce((a, v) => {
         return a ^ v;
-    }).toString(16).toUpperCase();
+    }).toString(16).toUpperCase().padStart(2, "0");
 }
 async function sendGPSInformation(coords) {
     if (!scanner) {
