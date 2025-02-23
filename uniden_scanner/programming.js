@@ -1,36 +1,10 @@
-// Copyright 2023, 2024 Bradley A. Town
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
 "use strict";
-// import * as monaco from "monaco-editor";
-// import * as uniden_scanner from "./uniden_scanner";
-// TODO(townba): I'd rather not do it this way, but for now, this is how I can avoid
-// problems with connecting more than once.
 let scanner;
-// TODO: Don't do things this way.
 let timerGPS;
 let watchPositionID;
 let currentCoords;
 const sendGPSInfoIntervalMilliseconds = 2000;
 class Channel {
-    // Determined through experimentation. Note that BC125AT SS and the scanner's
-    // own UI do not allow all these characters, but they work on the scanner.
     static invalidTagRegExp = /[^\x20-\x2B\x2D-\x7E]/g;
     static ctcssTones = [
         67.0, 69.3, 71.9, 74.4, 77.0, 79.7, 82.5, 85.4,
@@ -191,8 +165,7 @@ class Channel {
     })(Modulation = Channel.Modulation || (Channel.Modulation = {}));
     ;
 })(Channel || (Channel = {}));
-// let inputEditor: monaco.editor.IStandaloneCodeEditor;
-let inputEditor; // TODO: What should this be?
+let inputEditor;
 function clearResponses() {
     const outputTextArea = document.getElementById("output");
     if (outputTextArea instanceof HTMLTextAreaElement) {
@@ -222,57 +195,95 @@ function getScannerEventCallback(output) {
     };
 }
 async function sendCommands() {
-    if (scanner) {
-        scanner.log("sendCommands");
-    }
     let shouldConnect = false;
     const outputTextArea = document.getElementById("output");
     if (outputTextArea instanceof HTMLTextAreaElement) {
         if (!scanner) {
             scanner = new UnidenScanner(getScannerEventCallback(outputTextArea));
             shouldConnect = true;
-            scanner.log("should connect");
         }
     }
     if (!scanner) {
-        return Promise.reject(new Error("unable to create UnidenScanner class"));
+        throw new Error("unable to create UnidenScanner class");
     }
     try {
         if (shouldConnect) {
             try {
                 await scanner.connect();
-                scanner.log("after await scanner.connect()");
             }
             catch (e) {
                 scanner = undefined;
                 return;
             }
         }
-        scanner.log("we should have a scanner here");
-        const commands = 
-        // inputEditor.getValue()
-        inputEditor.value
+        const commands = inputEditor.value
             .split("\n").filter((fullLine) => {
             const line = fullLine;
             return line.length > 0 && line[0] !== "#";
         });
         for (const command of commands) {
-            // TODO: Handle "Uncaught (in promise) Error: Failed to execute
-            // 'transferOut' on 'USBDevice': The device was disconnected."
-            // Conditions: Connect scanner, send commands, unplug scanner, send
-            // commands.
             await scanner.sendCommand(command, command === "CLR" ? 30000 : undefined);
         }
-        return Promise.resolve();
     }
     catch (e) {
-        return Promise.reject(new Error("skipping remaining commands: " +
-            (e instanceof Error) ? e.message : "unknown"));
+        throw new Error("skipping remaining commands: " +
+            (e instanceof Error) ? e.message : "unknown");
     }
 }
 window.sendCommands = sendCommands;
-// TODO: Should this be `async`? It's called from the HTML.
-// TODO: Display the GPS information in a better way.
+function latlongAsGPSString(latlongAsDecimal, isLongitude) {
+    if (latlongAsDecimal == null) {
+        return ",";
+    }
+    const places = 4;
+    const n = Math.round(Math.abs(latlongAsDecimal) * 60 * 10 ** places);
+    return Math.floor(n / (60 * 10 ** places)).toString().padStart(isLongitude ? 3 : 2, "0") +
+        ((n / 10 ** places) % 60).toFixed(places).padStart(places + (places > 0 ? 1 : 0) + 2, "0") + "," +
+        (latlongAsDecimal < 0 ? (isLongitude ? "W" : "S") : (isLongitude ? "E" : "N"));
+}
+function clampNumber(n, min, max) {
+    if (n < min) {
+        return min;
+    }
+    else if (n > max) {
+        return max;
+    }
+    else {
+        return n;
+    }
+}
+function wrapDegrees(n) {
+    return ((n % 360) + 360) % 360;
+}
+function addNMEA0183Checksum(sentence) {
+    return sentence + "*" + sentence.split("").map((v) => {
+        return v.charCodeAt(0);
+    }).reduce((a, v) => {
+        return a ^ v;
+    }).toString(16).toUpperCase();
+}
+async function sendGPSInformation(coords) {
+    if (!scanner) {
+        return;
+    }
+    const now = new Date();
+    const timeGPSString = now.getUTCHours().toString().padStart(2, "0") +
+        now.getUTCMinutes().toString().padStart(2, "0") +
+        now.getUTCSeconds().toString().padStart(2, "0");
+    const latitudeGPSString = latlongAsGPSString(clampNumber(coords.latitude, -90, 90), false);
+    const longitudeGPSString = latlongAsGPSString(wrapDegrees(coords.longitude + 180) - 180, true);
+    const altitudeGPSString = (coords.altitude == null) ? "" :
+        clampNumber(Math.round(coords.altitude), Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER).toString();
+    const speedGPSString = (coords.speed == null) ? "" :
+        (clampNumber(coords.speed, 0, 299792458) * 1.94384449244).toFixed(0);
+    const headingGPSString = (coords.heading == null) ? "" :
+        wrapDegrees(Math.round(coords.heading)).toString().padStart(3, "0");
+    await scanner.write("$" + addNMEA0183Checksum(`GPRMC,${timeGPSString},A,` +
+        `${latitudeGPSString},${longitudeGPSString},${speedGPSString},` +
+        `${headingGPSString}`));
+    await scanner.write("$" + addNMEA0183Checksum(`GPGGA,${timeGPSString},` +
+        `${latitudeGPSString},${longitudeGPSString},1,,,${altitudeGPSString},M`));
+}
 async function toggleWatchGPSPosition() {
     const gpsInfoSpan = document.getElementById("gps_info");
     if (!watchPositionID) {
@@ -290,21 +301,19 @@ async function toggleWatchGPSPosition() {
             gpsInfoSpan.innerText = "(stopped) " + gpsInfoSpan.innerText;
         }
     }
-    return Promise.resolve();
 }
 window.toggleWatchGPSPosition = toggleWatchGPSPosition;
-function sendGPSInformationAndSetTimer() {
+async function sendGPSInformationAndSetTimer() {
     if (typeof currentCoords !== "undefined") {
         if (scanner) {
-            scanner.sendGPSInformation(currentCoords);
+            await sendGPSInformation(currentCoords);
         }
     }
     timerGPS = window.setTimeout(sendGPSInformationAndSetTimer, sendGPSInfoIntervalMilliseconds);
 }
-// TODO: Should this be `async`? It's called from the HTML.
 async function toggleSendGPSTimer() {
-    let shouldConnect = false;
     const outputTextArea = document.getElementById("output");
+    let shouldConnect = false;
     if (outputTextArea instanceof HTMLTextAreaElement) {
         if (!scanner) {
             scanner = new UnidenScanner(getScannerEventCallback(outputTextArea));
@@ -312,33 +321,29 @@ async function toggleSendGPSTimer() {
         }
     }
     if (!scanner) {
-        return Promise.reject(new Error("unable to create UnidenScanner class"));
+        throw new Error("Unable to create UnidenScanner class.");
     }
-    try {
-        if (shouldConnect) {
-            try {
-                await scanner.connect();
-            }
-            catch (e) {
-                scanner = undefined;
-                return;
-            }
-        }
-        if (!timerGPS) {
-            sendGPSInformationAndSetTimer();
-        }
-        else {
-            clearTimeout(timerGPS);
-            timerGPS = undefined;
-        }
-        return Promise.resolve();
+    if (shouldConnect) {
+        await scanner.connect();
     }
-    catch (e) {
-        return Promise.reject(new Error("skipping remaining commands: " +
-            (e instanceof Error) ? e.message : "unknown"));
+    if (!timerGPS) {
+        await sendGPSInformationAndSetTimer();
+    }
+    else {
+        clearTimeout(timerGPS);
+        timerGPS = undefined;
     }
 }
-window.toggleSendGPSTimer = toggleSendGPSTimer;
+function toggleSendGPSTimerSync() {
+    try {
+        toggleSendGPSTimer();
+    }
+    catch (e) {
+        alert("Aborting sending GPS information: " +
+            (e instanceof Error) ? e.message : "unknown");
+    }
+}
+window.toggleSendGPSTimerSync = toggleSendGPSTimerSync;
 function makeError(lineNumber, message) {
     return ("# Import error" +
         (lineNumber ? (", line " + lineNumber) : "") +
@@ -480,12 +485,6 @@ function importBC125ATSS(fullText, deleteEmptyChannels, importAllSettings, heade
             return (wxPri !== undefined) ?
                 `# Weather alert priority\nWXS,${wxPri}` : "";
         }
-        // TODO: "Service" \t [0-9]+ \t [^\t]* \t On|Off
-        // TODO: "Custom" \t [0-9]+ \t [^\t]* \t ?<lower>[0-9]+ \t ?<upper>[0-9]+ \t On|Off
-        // TODO: "CloseCall" \t DND|?|?|? \t On|Off \t On|Off \t On|Off
-        // TODO: "CloseCallBands" \t On|Off \t On|Off \t On|Off \t On|Off \t On|Off
-        // TODO: "GeneralSearch" \t ?[0-9]+ \t On|Off
-        // TODO: "Conventional" \t [0-9]+ \t [^\t]* \t On|Off
         if (!line.startsWith("C-Freq\t")) {
             return "";
         }
@@ -496,7 +495,6 @@ function importBC125ATSS(fullText, deleteEmptyChannels, importAllSettings, heade
             channel.location = location;
         }
         else {
-            // TODO: Consider finding an available channel.
             header.push(makeError(lineNumber, "invalid location: " + parts[1]));
             return "";
         }
@@ -535,7 +533,6 @@ function importBC125ATSS(fullText, deleteEmptyChannels, importAllSettings, heade
         else {
             header.push(makeWarning(lineNumber, `[channel ${channel.location}] invalid mode: ` + parts[4]));
         }
-        // By default, we want CTCSS/DCS search.
         channel.setCtcssDcsSearch();
         if (parts[5] === "Off") {
             channel.setCtcssDcsOff();
@@ -604,7 +601,6 @@ function importChirp(fullText, deleteEmptyChannels, header) {
         header.push(makeError(0, "empty file"));
         return [];
     }
-    // https://chirp.danplanet.com/projects/chirp/wiki/MemoryEditorColumns
     const csvHeader = chirp[0];
     let locationIndex = undefined;
     let nameIndex;
@@ -635,7 +631,6 @@ function importChirp(fullText, deleteEmptyChannels, header) {
         return [];
     }
     for (let i = 1; i < chirp.length; ++i) {
-        // TODO: Unify this with the BC125ATSS version further.
         const lineNumber = i + 1;
         const row = chirp[i];
         if (row === undefined) {
@@ -648,9 +643,7 @@ function importChirp(fullText, deleteEmptyChannels, header) {
             channel.location = location;
         }
         else {
-            // TODO: Consider finding an available channel.
             if (location === 0) {
-                // Special case: Put this one at location 500.
                 header.push(makeWarning(lineNumber, "invalid location 0, using channel 500"));
                 channel.location = 500;
             }
@@ -703,8 +696,6 @@ function importChirp(fullText, deleteEmptyChannels, header) {
         channel.setCtcssDcsSearch();
         if (toneIndex !== undefined) {
             const tone = row[toneIndex] ?? "";
-            // TODO: Consider additional tone modes.
-            // https://chirp.danplanet.com/projects/chirp/wiki/DevelopersToneModes
             if (tone === "TSQL" || tone === "Tone") {
                 let primaryIndex = ctoneIndex;
                 let secondaryIndex = rtoneIndex;
@@ -793,12 +784,8 @@ function importFile() {
     input.type = "file";
     input.onchange = async (_) => {
         if (!input.files) {
-            return Promise.resolve();
+            return;
         }
-        // NOTE: Clearing first to avoid an exception when the cursor is down
-        // farther in the control and we change the text in it. Not sure why this
-        // seems to fix it, but it does.
-        // inputEditor.setValue("");
         inputEditor.value = "";
         const header = [];
         if (!deleteEmptyChannels) {
@@ -809,8 +796,6 @@ function importFile() {
         }
         const commands = ["# Enter programming mode", "PRG"];
         for (const file of input.files) {
-            // Note: This could handle more than one file at a time, but that might be
-            // a little confusing for users.
             header.push("# Imported " + file.name);
             header.push("# Last modified " + new Date(file.lastModified).toString());
             const fullText = await file.text();
@@ -818,10 +803,8 @@ function importFile() {
                 commands.push.apply(commands, importBC125ATSS(fullText, deleteEmptyChannels, importAllSettings, header));
             }
             else if (fullText.match(/^[0-9.]+\r?\n/)) {
-                // TODO: Allow importing a plain list of frequencies.
             }
             else if (!fullText.match(/\t/)) {
-                // If we don't see any tabs, assume it's Chirp.
                 commands.push.apply(commands, importChirp(fullText, deleteEmptyChannels, header));
             }
             else {
@@ -829,17 +812,15 @@ function importFile() {
             }
         }
         commands.push("# Exit programming mode\nEPG");
-        // inputEditor.setValue(header.concat(commands).join("\n") + "\n");
         inputEditor.value = header.concat(commands).join("\n") + "\n";
     };
     input.click();
 }
 window.importFile = importFile;
 function resetCommands() {
-    const inputDiv = document.getElementById("input");
-    if (inputDiv) {
-        const originalCommands = inputDiv.getAttribute("data-original");
-        // inputEditor.setValue(originalCommands ?? "");
+    const inputElement = document.getElementById("input");
+    if (inputElement) {
+        const originalCommands = inputElement.getAttribute("data-original");
         inputEditor.value = originalCommands ?? "";
     }
 }
@@ -855,65 +836,10 @@ function init() {
     if (sendButton instanceof HTMLInputElement) {
         sendButton.disabled = !mayBeSupported;
     }
-    //   monaco.languages.register({ id: "bc125at" });
-    //   monaco.languages.setMonarchTokensProvider("bc125at", {
-    //     keywords: [
-    //       // There are duplicates between the lists. That should be okay.
-    //       // BC125AT commands.
-    //       "PRG", "EPG", "MDL", "VER", "VOL", "SQL", "BLT", "BSV", "CLR",
-    //       "BPL", "KBP", "PRI", "SCG", "DCH", "CIN", "SCO", "GLF", "ULF",
-    //       "LOF", "CLC", "SSG", "CSG", "CSP", "WXS", "CNT",
-    // 
-    //       // BCD325P2 commands.
-    //       "GID", "KEY", "POF", "QSH", "QSC", "CSC", "PWR", "STS", "GLG",
-    //       "JPM", "JNT", "MNU", "MDL", "VER", "PRG", "EPG", "BLT", "BSV",
-    //       "COM", "CLR", "KBP", "OMS", "PRI", "AGV", "SCT", "SIH", "SIT",
-    //       "QSL", "QGL", "CSY", "DSY", "SIN", "TRN", "AST", "SIF", "MCP",
-    //       "ABP", "TFQ", "AGC", "AGT", "DGR", "GIN", "ACC", "ACT", "DCH",
-    //       "CIN", "TIN", "GLI", "SLI", "ULI", "LOI", "REV", "FWD", "RMB",
-    //       "MEM", "LIH", "LIT", "CLA", "DLA", "LIN", "SCO", "BBS", "SHK",
-    //       "GLF", "ULF", "LOF", "CLC", "SSP", "CSG", "CBP", "CSP", "WXS",
-    //       "SGP", "TON", "CNT", "SCN", "VOL", "SQL", "P25", "DBC", "GDO",
-    //       "BSP", "GIE", "CIE", "RIE", "BAV", "WIN"
-    //     ],
-    //     tokenizer: {
-    //       // TODO: Do a better job with this: https://microsoft.github.io/monaco-editor/monarch.html
-    //       root: [
-    //         // @ts-ignore
-    //         [/^[A-Z]+\b/, {
-    //           cases: {
-    //             "@keywords": "keyword",
-    //           }
-    //         }],
-    //         // @ts-ignore
-    //         [/\b\d+\b/, "number"],
-    //         // @ts-ignore
-    //         [/,/, "delimiter"],
-    //         // @ts-ignore
-    //         [/^\s*#.*/, "comment"],
-    //       ],
-    //     }
-    //   });
-    const inputDiv = document.getElementById("input");
-    if (inputDiv) {
-        // inputEditor = monaco.editor.create(inputDiv, {
-        //   language: "bc125at",
-        //   value: "",
-        // });
-        // inputEditor.focus();
-        inputEditor = inputDiv;
-        inputDiv.focus();
-        // const executeAction: monaco.editor.IActionDescriptor = {
-        //   contextMenuGroupId: "2_bc125at",
-        //   contextMenuOrder: 1,
-        //   id: "send-commands",
-        //   keybindings: [
-        //     monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-        //   ],
-        //   label: "Send Commands",
-        //   run: sendCommands,
-        // };
-        // monaco.editor.addEditorAction(executeAction);
+    const inputElement = document.getElementById("input");
+    if (inputElement) {
+        inputEditor = inputElement;
+        inputElement.focus();
     }
     resetCommands();
 }
