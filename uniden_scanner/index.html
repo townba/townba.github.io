@@ -17,18 +17,29 @@
     device. (I contacted Uniden support about the BCD160DN in December 2024, but
     they replied, “Regrettably, Uniden does not currently offer a protocol for
     the BCD160DN.”)</p>
+<h3>Browser support</h3>
 <p>Your current browser
     <span id="supported">may or may not be</span> supported. (As of April 2023,
     this is only supported by a
     <a href="https://developer.mozilla.org/en-US/docs/Web/API/USB#browser_compatibility">limited
-    few browsers</a> such as Chrome and Edge.) I’ve tested it on the following:
+    few browsers</a> such as Chrome and Edge.) I’ve tested it most recently on
+    the following:
     <ul>
-        <li>Chrome 113.0.5672.92 on a MacBook Pro 16" (2023) running Ventura
-        13.3</li>
-        <li>Chrome 113.0.5672.77 on a Pixel 6 Pro running Android 13</li>
-        <li>Chrome 131.0.6778.109 on a MacBook Pro 16" (2023) running Sequoia
-            15.1</li>
-    </ul></p>
+        <li>Chrome 133.0.6943.100 on a MacBook Pro 16" (2023) running Sequoia
+            15.3.1 (24D70)</li>
+        <li>Chrome Beta 134.0.6998.24 on a Pixel 9 Pro XL running Android
+            15</li>
+    </ul>
+</p>
+<h4>Linux and Android</h4>
+<p>If you are trying to use this on Linux or Android and it connects but does
+    not communicate, it could be because of underlying USB kernel drivers. You
+    might try enabling the “Automatically detach USB kernel drivers” option in
+    the latest versions of Chrome. On my Pixel 9 Pro XL, I needed to do that in
+    Chrome Beta to get it to work with the BCD325P2.</p>
+<p>To do this, put <code>chrome://flags/#automatic-usb-detach</code> in the
+    Chrome address bar, press Enter, enable the option, and restart your
+    browser.</p>
 
 <h3>Importing BC125AT SS and Chirp CSV files</h3>
 <p>You can download frequency lists to import from places like
@@ -61,10 +72,10 @@
 
 <h3>GPS (BCD325P2 only)</h3>
 <!-- TODO: Allow typing in the GPS info to send. -->
-<button id="toggle_gps_watch" type="button" onclick="toggleWatchGPSPosition()">Toggle Watch
+<button id="toggle_gps_watch" type="button" onclick="toggleWatchGPSPositionSync()">Toggle Watch
     GPS position</button> <span id="gps_info">(no GPS info)</span>
 <br>
-<button id="toggle_gps_send" type="button" onclick="toggleSendGPSTimer()">Toggle Send GPS
+<button id="toggle_gps_send" type="button" onclick="toggleSendGPSTimerSync()">Toggle Send GPS
     timer</button>
 <br>
 
@@ -72,13 +83,6 @@
 <div>
     <div style="float: left; width: 560px">
         <h4>Commands to send</h4>
-        <!-- <div id="input"
-            style="height: 360px; width: 550px; border: 1px solid black; margin-right: 3px"
-            data-original="# Just a couple non-destructive commands to see if
-# things work.
-MDL
-VER
-"></div> -->
         <div>
             <textarea id="input" style="height: 356px; width: 546px; border: 1px solid black; margin-right: 3px"
             data-original="# Just a couple non-destructive commands to see if
@@ -88,7 +92,7 @@ VER
 "></textarea>
             </div>
         <br>
-        <button id="send" type="button" onclick="sendCommands()">Send commands</button>
+        <button id="send" type="button" onclick="sendCommandsSync()">Send commands</button>
         <p>You can also press Control+Return or Command+Return (macOS).</p><br>
     </div>
     <div style="float: left">
@@ -100,6 +104,8 @@ VER
         <p>Errors seen: <span id="error_count">0</span></p>
     </div>
 </div>
+<script src="gps.js"></script>
+<script src="import.js"></script>
 <script src="programming.js"></script>
 </body>
 </html>

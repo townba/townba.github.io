@@ -24,8 +24,7 @@ class UnidenScanner {
         if (this.device) {
             throw new Error("already connected");
         }
-        let device;
-        device = await navigator.usb.requestDevice({
+        const device = await navigator.usb.requestDevice({
             filters: [{ vendorId: UnidenScanner.VENDOR_ID }]
         });
         if (!device) {
@@ -136,7 +135,7 @@ class UnidenScanner {
         }
     }
 }
-async function exampleUsage() {
+async function _exampleUsage() {
     let programming = false;
     const scanner = new UnidenScanner();
     try {
