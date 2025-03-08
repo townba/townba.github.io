@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Programming a Uniden BC125AT from your browser</title>
-<script src="uniden_scanner.js"></script>
 </head>
 <body>
 
@@ -67,6 +66,8 @@
 <button id="import" type="button" onclick="importFile()">Import BC125AT SS or
     Chirp CSV file</button>
 <br>
+<button id="import" type="button" onclick="importFromScannerSync()">Import BC125AT settings</button>
+<br>
 <button id="reset" type="button" onclick="resetCommands()">Reset
     commands</button>
 
@@ -93,7 +94,8 @@ VER
             </div>
         <br>
         <button id="send" type="button" onclick="sendCommandsSync()">Send commands</button>
-        <p>You can also press Control+Return or Command+Return (macOS).</p><br>
+        <p>You can also press Control+Return or Command+Return (macOS) in the
+           edit control to send the commands.</p><br>
     </div>
     <div style="float: left">
         <h4>Scanner communication</h4>
@@ -104,8 +106,6 @@ VER
         <p>Errors seen: <span id="error_count">0</span></p>
     </div>
 </div>
-<script src="gps.js"></script>
-<script src="import.js"></script>
-<script src="programming.js"></script>
+<script src="bundle.js"></script>
 </body>
 </html>
