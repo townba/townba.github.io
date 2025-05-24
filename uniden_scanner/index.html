@@ -4,58 +4,33 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Programming a Uniden BC125AT from your browser</title>
+<style>
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .col {
+        flex: 1 1 560px;
+    }
+</style>
 </head>
 <body>
 
 <h1>Programming a Uniden scanner from your browser</h1>
 <h2 style="color: red">USE AT YOUR OWN RISK.</h2>
-<p>This communicates with a Uniden BC125AT or BCD325P2 scanner using <a
-    href="https://developer.mozilla.org/en-US/docs/Web/API/USB">WebUSB</a> and
-    requires no special drivers. It might be useful for users who do not
-    use Windows or might want to program their scanner using an Android
-    device. (I contacted Uniden support about the BCD160DN in December 2024, but
-    they replied, “Regrettably, Uniden does not currently offer a protocol for
-    the BCD160DN.”)</p>
-<h3>Browser support</h3>
+
 <p>Your current browser
-    <span id="supported">may or may not be</span> supported. (As of April 2023,
-    this is only supported by a
-    <a href="https://developer.mozilla.org/en-US/docs/Web/API/USB#browser_compatibility">limited
-    few browsers</a> such as Chrome and Edge.) I’ve tested it most recently on
-    the following:
-    <ul>
-        <li>Chrome 133.0.6943.100 on a MacBook Pro 16" (2023) running Sequoia
-            15.3.1 (24D70)</li>
-        <li>Chrome Beta 134.0.6998.24 on a Pixel 9 Pro XL running Android
-            15</li>
-    </ul>
-</p>
-<h4>Linux and Android</h4>
-<p>If you are trying to use this on Linux or Android and it connects but does
-    not communicate, it could be because of underlying USB kernel drivers. You
-    might try enabling the “Automatically detach USB kernel drivers” option in
-    the latest versions of Chrome. On my Pixel 9 Pro XL, I needed to do that in
-    Chrome Beta to get it to work with the BCD325P2.</p>
-<p>To do this, put <code>chrome://flags/#automatic-usb-detach</code> in the
-    Chrome address bar, press Enter, enable the option, and restart your
-    browser.</p>
+    <b><span id="supported">may not be</span> supported</b>. If using Chrome on
+    Linux or Android, see <a href="#detaching">“Detaching USB kernel
+    drivers”</a> below.</p>
 
 <h3>Importing BC125AT SS and Chirp CSV files</h3>
 <p>You can download frequency lists to import from places like
-    <a href="https://drive.google.com/file/d/1Js-oq0mv2PVdKzRmW2fWYZsZOJ52rfcU">my
-        example file</a>
-        (which includes possible frequencies for the 2023 Indy 500 that people
-        have contributed to <a
-        href="https://forums.radioreference.com/threads/2023-indycar-thread.456202">this
-        thread on RadioReference.com</a>),
-    <a href="https://themann00.com/latest-frequencies/">Jacob C. Mann’s
-    site</a>, and <a
-    href="https://docs.google.com/spreadsheets/d/1I5ggpZdLYoqDfPCZJ6lhs5DcEhdpQTV8btN62DWscZk">Trevor
-    Coleman’s Google Sheets spreadsheet</a> (which can be used to create your
-    own import file).</p>
-<p>Note: This is definitely alpha-quality importing. It may not import all the
-    settings available in the files. It also will only work for BC125AT until I
-    get around to making it more general.</p>
+    <a href="https://themann00.com/indycar-frequencies/">Jacob C. Mann’s
+    site</a>.</p>
+<p class="note">Note: This is definitely alpha-quality importing. It may not
+    import all the settings available in the files. It also will only work for
+    BC125AT until I get around to making it more general.</p>
 <input id="delete_empty_channels" type="checkbox" checked />
 <label for="delete_empty_channels">Create “Delete channel” commands for empty
     channels when importing</label>
@@ -66,23 +41,15 @@
 <button id="import" type="button" onclick="importFile()">Import BC125AT SS or
     Chirp CSV file</button>
 <br>
-<button id="import" type="button" onclick="importFromScannerSync()">Import BC125AT settings</button>
+<button id="import" type="button" onclick="importFromScannerSync()">Read
+    everything from BC125AT</button>
 <br>
 <button id="reset" type="button" onclick="resetCommands()">Reset
     commands</button>
 
-<h3>GPS (BCD325P2 only)</h3>
-<!-- TODO: Allow typing in the GPS info to send. -->
-<button id="toggle_gps_watch" type="button" onclick="toggleWatchGPSPositionSync()">Toggle Watch
-    GPS position</button> <span id="gps_info">(no GPS info)</span>
-<br>
-<button id="toggle_gps_send" type="button" onclick="toggleSendGPSTimerSync()">Toggle Send GPS
-    timer</button>
-<br>
-
 <h3>Commands and responses</h3>
-<div>
-    <div style="float: left; width: 560px">
+<div class="row">
+    <div class="col">
         <h4>Commands to send</h4>
         <div>
             <textarea id="input" style="height: 356px; width: 546px; border: 1px solid black; margin-right: 3px"
@@ -97,7 +64,7 @@ VER
         <p>You can also press Control+Return or Command+Return (macOS) in the
            edit control to send the commands.</p><br>
     </div>
-    <div style="float: left">
+    <div class="col">
         <h4>Scanner communication</h4>
         <textarea readonly id="output"
             style="height: 356px; width: 546px; border: 1px solid black"></textarea>
@@ -106,6 +73,48 @@ VER
         <p>Errors seen: <span id="error_count">0</span></p>
     </div>
 </div>
+<br>
+
+<h3>Scanner communication</h3>
+<p>This communicates with a Uniden BC125AT or BCD325P2 scanner using <a
+    href="https://developer.mozilla.org/en-US/docs/Web/API/USB">WebUSB</a> and
+    requires no special drivers. It might be useful for users who do not
+    use Windows or might want to program their scanner using an Android
+    device. (I contacted Uniden support about the BCD160DN in December 2024, but
+    they replied, “Regrettably, Uniden does not currently offer a protocol for
+    the BCD160DN.”)</p>
+
+<h3>GPS (only useful for BCD325P2)</h3>
+<!-- TODO: Allow typing in the GPS info to send. -->
+<button id="toggle_gps_watch" type="button" onclick="toggleWatchGPSPositionSync()">Toggle Watch
+    GPS position</button> <span id="gps_info">(no GPS info)</span>
+<br>
+<button id="toggle_gps_send" type="button" onclick="toggleSendGPSTimerSync()">Toggle Send GPS
+    timer</button>
+<br>
+<h3>Browser support</h3>
+    (As of April 2023, this is only supported by a
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/USB#browser_compatibility">limited
+    few browsers</a> such as Chrome and Edge.) I’ve tested it most recently on
+    the following:
+    <ul>
+        <li>Chrome 137.0.7151.41 on a MacBook Pro 16" (2023) running Sequoia
+            15.5 (24F74)</li>
+        <li>Chrome Beta 134.0.6998.24 on a Pixel 9 Pro XL running Android
+            15 with “Automatically detach USB kernel drivers” enabled (see
+            below)</li>
+    </ul>
+
+<h3 id="detaching">Detaching USB kernel drivers</h3>
+<p>If you are trying to use this on Linux or Android and it connects but does
+    not communicate, it could be because of underlying USB kernel drivers. You
+    might try enabling the “Automatically detach USB kernel drivers” option in
+    the latest versions of Chrome. On my Pixel 9 Pro XL, I needed to do that in
+    Chrome Beta to get it to work with the BCD325P2.</p>
+<p>To do this, put <code>chrome://flags/#automatic-usb-detach</code> in the
+    Chrome address bar, press Enter, enable the option, and restart your
+    browser.</p>
+
 <script src="bundle.js"></script>
 </body>
 </html>
