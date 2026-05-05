@@ -1,0 +1,732 @@
+{
+  "$ref": "#/definitions/Config",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Alert": {
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Integer"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "light": {
+          "enum": [
+            "on",
+            "off",
+            "slow",
+            "fast"
+          ],
+          "type": "string"
+        },
+        "tone": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Integer"
+            },
+            {
+              "const": "off",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Backlight": {
+      "additionalProperties": false,
+      "properties": {
+        "dimmer": {
+          "enum": [
+            "low",
+            "middle",
+            "high"
+          ],
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "10 sec",
+            "30 sec",
+            "squelch",
+            "keypress",
+            "infinite"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Battery": {
+      "additionalProperties": false,
+      "properties": {
+        "chargeTime": {
+          "$ref": "#/definitions/Integer"
+        },
+        "save": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "Channel": {
+      "additionalProperties": false,
+      "properties": {
+        "alert": {
+          "$ref": "#/definitions/Alert"
+        },
+        "attenuator": {
+          "type": "boolean"
+        },
+        "audioType": {
+          "enum": [
+            "analog",
+            "digital",
+            "all"
+          ],
+          "type": "string"
+        },
+        "frequency": {
+          "type": "number"
+        },
+        "lockout": {
+          "$ref": "#/definitions/LockoutType"
+        },
+        "modulation": {
+          "enum": [
+            "fm",
+            "nfm",
+            "auto"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "$ref": "#/definitions/NameType"
+        },
+        "note": {
+          "type": "string"
+        },
+        "numberTag": {
+          "$ref": "#/definitions/NumberTagType"
+        },
+        "priority": {
+          "type": "boolean"
+        },
+        "tgid": {
+          "$ref": "#/definitions/Integer"
+        },
+        "volumeOffset": {
+          "enum": [
+            -3,
+            -2,
+            -1,
+            0,
+            1,
+            2,
+            3
+          ],
+          "type": "number"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "Config": {
+      "additionalProperties": false,
+      "properties": {
+        "dangerousRoads": {
+          "items": {
+            "$ref": "#/definitions/LocationDangerous"
+          },
+          "type": "array"
+        },
+        "dangerousXings": {
+          "items": {
+            "$ref": "#/definitions/LocationDangerous"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "pois": {
+          "items": {
+            "$ref": "#/definitions/LocationPOI"
+          },
+          "type": "array"
+        },
+        "settings": {
+          "$ref": "#/definitions/Settings"
+        },
+        "systems": {
+          "items": {
+            "$ref": "#/definitions/System"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "DelayTimeType": {
+      "enum": [
+        -10,
+        -5,
+        -2,
+        0,
+        1,
+        2,
+        5,
+        10,
+        30
+      ],
+      "type": "number"
+    },
+    "Frequency": {
+      "additionalProperties": false,
+      "properties": {
+        "colorCode": {
+          "not": {}
+        },
+        "frequency": {
+          "type": "number"
+        },
+        "lcn": {
+          "not": {}
+        },
+        "ranArea": {
+          "not": {}
+        }
+      },
+      "required": [
+        "frequency"
+      ],
+      "type": "object"
+    },
+    "GPSFormat": {
+      "additionalProperties": false,
+      "properties": {
+        "pos": {
+          "enum": [
+            "dms",
+            "deg"
+          ],
+          "type": "string"
+        },
+        "time": {
+          "enum": [
+            "12h",
+            "24h"
+          ],
+          "type": "string"
+        },
+        "timeZone": {
+          "type": "number"
+        },
+        "units": {
+          "enum": [
+            "mile",
+            "km"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Group": {
+      "additionalProperties": false,
+      "properties": {
+        "channels": {
+          "items": {
+            "$ref": "#/definitions/Channel"
+          },
+          "type": "array"
+        },
+        "location": {
+          "$ref": "#/definitions/LocationSite"
+        },
+        "lockout": {
+          "$ref": "#/definitions/LockoutType"
+        },
+        "name": {
+          "$ref": "#/definitions/NameType"
+        },
+        "note": {
+          "type": "string"
+        },
+        "quickKey": {
+          "$ref": "#/definitions/QuickKeyType"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "Integer": {
+      "multipleOf": 1,
+      "type": "number"
+    },
+    "LocationDangerous": {
+      "additionalProperties": false,
+      "properties": {
+        "alert": {
+          "$ref": "#/definitions/Alert"
+        },
+        "heading": {
+          "enum": [
+            "n",
+            "ne",
+            "e",
+            "se",
+            "s",
+            "sw",
+            "w",
+            "nw",
+            "all"
+          ],
+          "type": "string"
+        },
+        "latitude": {
+          "type": "number"
+        },
+        "lockout": {
+          "$ref": "#/definitions/LockoutType"
+        },
+        "longitude": {
+          "type": "number"
+        },
+        "name": {
+          "$ref": "#/definitions/NameType"
+        },
+        "note": {
+          "type": "string"
+        },
+        "speedLimit": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "latitude",
+        "longitude",
+        "name"
+      ],
+      "type": "object"
+    },
+    "LocationPOI": {
+      "additionalProperties": false,
+      "properties": {
+        "alert": {
+          "$ref": "#/definitions/Alert"
+        },
+        "latitude": {
+          "type": "number"
+        },
+        "lockout": {
+          "$ref": "#/definitions/LockoutType"
+        },
+        "longitude": {
+          "type": "number"
+        },
+        "name": {
+          "$ref": "#/definitions/NameType"
+        },
+        "note": {
+          "type": "string"
+        },
+        "range": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "latitude",
+        "longitude",
+        "name"
+      ],
+      "type": "object"
+    },
+    "LocationSite": {
+      "additionalProperties": false,
+      "properties": {
+        "gpsEnable": {
+          "type": "boolean"
+        },
+        "latitude": {
+          "type": "number"
+        },
+        "longitude": {
+          "type": "number"
+        },
+        "range": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "latitude",
+        "longitude"
+      ],
+      "type": "object"
+    },
+    "LockoutType": {
+      "enum": [
+        "temporary",
+        "locked",
+        "unlocked"
+      ],
+      "type": "string"
+    },
+    "NameType": {
+      "description": "Names cannot be longer than 16 characters.",
+      "maxLength": 16,
+      "type": "string"
+    },
+    "NumberTagType": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "QuickKeyType": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "Settings": {
+      "additionalProperties": false,
+      "properties": {
+        "backlight": {
+          "$ref": "#/definitions/Backlight"
+        },
+        "battery": {
+          "$ref": "#/definitions/Battery"
+        },
+        "contrast": {
+          "$ref": "#/definitions/Integer"
+        },
+        "displayUnitID": {
+          "type": "boolean"
+        },
+        "gpsBaudRate": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Integer"
+            },
+            {
+              "const": "off",
+              "type": "string"
+            }
+          ]
+        },
+        "gpsFormat": {
+          "$ref": "#/definitions/GPSFormat"
+        },
+        "keyBeep": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Integer"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Site": {
+      "additionalProperties": false,
+      "properties": {
+        "analogAudioAGC": {
+          "type": "boolean"
+        },
+        "attenuator": {
+          "type": "boolean"
+        },
+        "bandPlan": {
+          "not": {}
+        },
+        "delayTime": {
+          "$ref": "#/definitions/DelayTimeType"
+        },
+        "digitalAudioAGC": {
+          "type": "boolean"
+        },
+        "digitalWaiting": {
+          "enum": [
+            0,
+            100,
+            200,
+            300,
+            400,
+            500,
+            600,
+            700,
+            800,
+            900,
+            1000
+          ],
+          "type": "number"
+        },
+        "frequencies": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Frequency"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "holdTime": {
+          "$ref": "#/definitions/Integer"
+        },
+        "location": {
+          "$ref": "#/definitions/LocationSite"
+        },
+        "lockout": {
+          "$ref": "#/definitions/LockoutType"
+        },
+        "modulation": {
+          "enum": [
+            "fm",
+            "nfm",
+            "auto"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "$ref": "#/definitions/NameType"
+        },
+        "note": {
+          "type": "string"
+        },
+        "numberTag": {
+          "$ref": "#/definitions/NumberTagType"
+        },
+        "quickKey": {
+          "$ref": "#/definitions/QuickKeyType"
+        },
+        "siteType": {
+          "not": {}
+        },
+        "startupKey": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "System": {
+      "additionalProperties": false,
+      "properties": {
+        "groups": {
+          "items": {
+            "$ref": "#/definitions/Group"
+          },
+          "type": "array"
+        },
+        "name": {
+          "$ref": "#/definitions/NameType"
+        },
+        "note": {
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/SystemOptions"
+        },
+        "sites": {
+          "items": {
+            "$ref": "#/definitions/Site"
+          },
+          "type": "array"
+        },
+        "type": {
+          "$ref": "#/definitions/SystemTypeType"
+        }
+      },
+      "required": [
+        "type",
+        "name"
+      ],
+      "type": "object"
+    },
+    "SystemConventionalOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "analogAudioAGC": {
+          "type": "boolean"
+        },
+        "delayTime": {
+          "$ref": "#/definitions/DelayTimeType"
+        },
+        "digitalAudioAGC": {
+          "type": "boolean"
+        },
+        "digitalWaiting": {
+          "enum": [
+            0,
+            100,
+            200,
+            300,
+            400,
+            500,
+            600,
+            700,
+            800,
+            900,
+            1000
+          ],
+          "type": "number"
+        },
+        "holdTime": {
+          "$ref": "#/definitions/Integer"
+        },
+        "lockout": {
+          "$ref": "#/definitions/LockoutType"
+        },
+        "numberTag": {
+          "$ref": "#/definitions/NumberTagType"
+        },
+        "quickKey": {
+          "$ref": "#/definitions/QuickKeyType"
+        },
+        "startupKey": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "SystemOptions": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SystemConventionalOptions"
+        },
+        {
+          "$ref": "#/definitions/SystemTrunkedOptions"
+        }
+      ]
+    },
+    "SystemTrunkedOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "analogAudioAGC": {
+          "type": "boolean"
+        },
+        "delayTime": {
+          "$ref": "#/definitions/DelayTimeType"
+        },
+        "digitalAudioAGC": {
+          "type": "boolean"
+        },
+        "emergencyAlert": {
+          "$ref": "#/definitions/Alert"
+        },
+        "idFormat": {
+          "enum": [
+            "afs",
+            "decimal",
+            "hex"
+          ],
+          "type": "string"
+        },
+        "nac": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Integer"
+            },
+            {
+              "const": "search",
+              "type": "string"
+            }
+          ]
+        },
+        "numberTag": {
+          "$ref": "#/definitions/NumberTagType"
+        },
+        "priorityIDScan": {
+          "type": "boolean"
+        },
+        "scanSearch": {
+          "enum": [
+            "scan",
+            "search"
+          ],
+          "type": "string"
+        },
+        "setEndCode": {
+          "enum": [
+            "analog",
+            "analog+digital",
+            "ignore"
+          ],
+          "type": "string"
+        },
+        "setStatusBit": {
+          "enum": [
+            "yes",
+            "ignore"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "SystemTypeType": {
+      "enum": [
+        "conventional",
+        "p25-standard",
+        "p25-one-freq",
+        "motorola",
+        "edacs-wide/narrow",
+        "edacs-scat",
+        "ltr",
+        "mototrbo",
+        "dmr",
+        "nxdn"
+      ],
+      "type": "string"
+    }
+  }
+}
